@@ -1,0 +1,225 @@
+create table emplyoee(EmpId int Primary Key,
+					  EmpName varchar,
+					  Gender char,
+					  Salary int,
+					  City Varchar);
+					  
+					  
+Create table empdetails(EmpId int references emplyoee(EmpId),
+					   Project Varchar,
+					   EmpPosition Varchar,
+					   DOJ date);
+					   
+Select * from emplyoee;
+
+Select * from empdetails;
+
+insert into emplyoee Values(1,'Sanjana', 'F', 58000, 'Pune'),
+					(2,'Sanika', 'F', 25000, 'Mumbai'),
+					(3,'Onkar', 'M', 20000, 'Banglore'),
+					(4, 'Ganesh', 'M', 40000, 'Delhi'),
+					(5, 'Aryan', 'M', 15000, 'Mumbai')
+					
+
+insert into empdetails Values(1,'P1', 'Data Analyst','15-10-2023'),
+							 (2,'P2', 'Manager','25-09-2023'),
+							 (3,'P1', 'Lead','15-08-2021'),
+							 (4,'P3', 'Manager','29-01-2023'),
+							 (5,'P2', 'Data Analyst','17-10-2018')
+					
+Select * from emplyoee;
+
+Select * from empdetails;			
+
+
+
+Queries 
+
+1. Find the list of Emplyoees whose salary ranges between 20000 to 60000?
+
+select EmpName, Salary from emplyoee where salary between 20000 and 60000; 
+
+
+2. find the list of emplyoee whose from same city
+
+select e1.EmpName, e1.City, e1.EmpId from emplyoee e1, emplyoee e2 where 
+e1.City=e2.City and e1.EmpId != e2.EmpId;
+
+3. Write a query to find null value?
+
+Select * from emplyoee where EmpId is NULL;
+
+
+4. write a query to find cumulative sum of emplyoees salary
+
+Select EmpId, Salary, Sum(Salary) over (Order By EmpId) 
+as CumulativeSum from emplyoee;
+
+5. Whats male and female emplyyoees ratio's?
+
+select 
+	(count(*) filter (where Gender = 'M') * 100.0 / Count(*))As MalePct,
+	(count(*) filter (where Gender = 'F') * 100.0 / Count(*))As femalePct
+from emplyoee;
+
+
+
+SELECT 
+    Gender,
+    COUNT(*) AS Count,
+    (COUNT(*) * 100.0 / SUM(COUNT(*)) OVER ()) AS Ratio
+FROM emplyoee
+GROUP BY Gender;
+
+6. Write a Query to fetch 50% records from the emplyooe table.
+
+select * from emplyoee 
+where EmpId<=(select count(EmpId)/2 from emplyoee);
+
+
+SELECT *
+FROM emplyoee
+ORDER BY EmpId
+LIMIT (SELECT COUNT(*) / 2 FROM emplyoee);
+
+7.Query to fetch the emplyoees salary but replace last 2 digit with 'xx'.
+
+select 
+Salary, CONCAT(left(CAST(Salary as varchar), LENGTH(CAST(Salary as varchar))-2),'XX')
+as Masked
+from emplyoee;
+
+
+SELECT 
+    EmpId,  
+    EmpName,
+    CONCAT(SUBSTRING(CAST(Salary AS VARCHAR), 1, LENGTH(CAST(Salary AS VARCHAR)) - 2), 'xx') AS ModifiedSalary
+FROM emplyoee;
+
+
+8.Write a Query to fetch even and odd rows from emp table
+
+WITH NumberedRows AS (
+    SELECT 
+        *, 
+        ROW_NUMBER() OVER (ORDER BY (SELECT NULL)) AS RowNum
+    FROM emplyoee
+)
+
+SELECT * 
+FROM NumberedRows
+WHERE RowNum % 2 != 0; 
+
+
+select * 
+from (select *, Row_Number() over(Order by EmpId) as RowNumber 
+	  from emplyoee) As emp
+where emp.RowNumber % 2 =0;
+
+
+select * from emplyoee where MOD(EmpId, 2)=0;
+ --for Odd
+select * from emplyoee where MOD(EmpId, 2)=1;
+
+
+9. Write a Query to find the list of Emp names whic is 
+
+	a. satrting with vowels(a,e,i,o,o), without deplicats
+	select distinct EmpName 
+	from emplyoee
+	where lower(EmpName) similar to '[a,e,i,o,u]%';
+
+	b. Ending with vowels without duplicates
+	select distinct EmpName 
+	from emplyoee
+	where lower(EmpName) similar to '%[a,e,i,o,u]';
+
+	c. satrting and ending with vowels(a,e,i,o,o), without deplicats
+	select distinct EmpName 
+	from emplyoee
+	where lower(EmpName) similar to '[a,e,i,o,u]%[a,e,i,o,u]';
+
+10.find Nth highest salary from emp table with and without using Top/Limit keywords.
+
+
+SELECT DISTINCT salary
+FROM emp
+ORDER BY salary DESC
+LIMIT 1 OFFSET 3; -- Replace 3 with the desired rank (N)
+
+
+
+11. write a query to find and remove duplicate records from a table
+
+select EmpId, EmpName, Gender, Salary, City, count(*) as Duplicate
+from emplyoee
+group by EmpId, EmpName, Gender, Salary, City
+having count(*)>1;
+
+delete from emplyoee
+where EmpId in 
+(select EmpId from Emplyoee
+ group by EmpId
+ having count(*)>1);
+
+12. Query to retrive the list of emp working in same Project.
+
+
+select EmpId, EmpName, Gender, Salary, City, count(*) as Duplicate
+from emplyoee
+group by EmpId, EmpName, Gender, Salary, City
+having count(*)>1;
+
+delete from emplyoee
+where EmpId in 
+(select EmpId from Emplyoee
+ group by EmpId
+ having count(*)>1);
+
+
+13. Show the emp with the highest salary for each project
+
+select ed.Project, MAx(e.Salary) As ProjectSal
+from emplyoee as e
+inner join empdetails as ed
+on e.EmpId = ed.EmpId
+group by Project
+order by ProjectSal desc;
+ 
+14. Query to find the total count of emp joined each year
+
+select extract('year' from DOJ) as JoinYear, count(*) as EmpCount
+from emplyoee as e
+inner join empdetails as ed on e.EmpId=ed.EmpId
+group by JoinYear
+order by JoinYear asc;
+ 
+
+15. create 3 groups based on salary col, salary less than 50 is low, between 40000 to 50000 
+and above 50000 is high
+
+select EmpName, Salary,
+	CASE 
+	when Salary > 50000 then 'High'
+	when Salary between 20000 And 50000 then 'Medium'
+	else 'Low'
+	End as SalaryStatus
+from emplyoee;
+ 
+
+16.Qury to Pivot the data in the Emp table and retrive the total salary for each city.
+   the result should be display EmpId, EmpNAme and separate columns for each city(Pune, Mumbai, Delhi), contaning the corresponding total salary
+
+select
+EmpId,
+EmpName, 
+sum(case when city= 'Pune' then Salary end)as "Pune",
+sum(case when city= 'Mumbai' then Salary end)as "Mumbai",
+sum(case when city= 'Delhi' then Salary end)as "Delhi"
+from emplyoee
+group by EmpId, EmpName;
+ 
+
+
+
+	
